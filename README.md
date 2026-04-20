@@ -6,6 +6,9 @@ This can also help understand how the slipping of the phasors result in the puls
 
 This project visualizes how individual complex phasors evolve and how their vector sum grows and shrinks as they drift in and out of alignment.
 
+<img width="900/6" height="450/6" alt="image" src="https://github.com/arkaddas/VISUALIZATION-group-velocity-intuition/blob/main/phasor_slip_pulse.gif?raw=true)"/>
+
+
 ## What this shows
 
 For components of the form
