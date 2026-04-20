@@ -1,0 +1,107 @@
+% Visual intuition for phasor realignment, beating, and envelope formation
+% from multiple frequency/wavenumber components.
+%
+% The script shows:
+% 1) Individual phasors in the complex plane
+% 2) Their resultant sum
+% 3) The time evolution of the normalized resultant magnitude
+%
+% Author: Your Name
+% Repo: phasor-slip-visualization
+
+clear; clc; close all;
+
+%% Parameters
+t_max = 100;
+dt = 0.1;
+t_vec = 0:dt:t_max;
+
+n = 5;                              % number of components
+omega = linspace(1, 3, n);          % angular frequencies
+k = linspace(1, 3, n);              % wavenumbers
+
+v_frame = 0;                        % moving observation frame
+                                     % try 0, 1, 2, etc.
+
+
+
+%% Precompute resultant magnitude over all time
+resultant_mag = zeros(size(t_vec));
+
+for idx = 1:numel(t_vec)
+    t = t_vec(idx);
+    x = v_frame * t;
+    p = exp(1i * (k*x - omega*t));
+    p_sum = sum(p);
+    resultant_mag(idx) = abs(p_sum) / n;
+end
+
+% Precompute phasors p for all times (n x numel(t_vec))
+% Each column corresponds to p at a given time t
+p_all = exp(1i * (k.' * (v_frame * t_vec) - omega.' * t_vec));  % (n x T)
+
+%% GIF filename
+gif_filename = 'phasor_slip_pulse.gif';
+
+%% Figure setup
+figure('Color', 'w', 'Position', [200, 200, 1500, 650]);
+
+for idx = 1:numel(t_vec)
+    t = t_vec(idx);
+    x = v_frame * t;
+
+    % Individual phasors
+    p = exp(1i * (k*x - omega*t));
+    p_sum = sum(p);
+
+    %% Left panel: phasors in complex plane
+    subplot(1,2,1);
+    cla; hold on; grid on; axis equal;
+
+    quiver(zeros(size(p)), zeros(size(p)), real(p), imag(p), 0, 'b',...
+        'LineWidth', 1.3, 'LineStyle', '--');
+
+    quiver(0, 0, real(p_sum)/n, imag(p_sum)/n, 0, ...
+        'k', 'LineWidth', 2.5);
+
+    plot(real(p), imag(p), 'bo', 'MarkerFaceColor', 'b');
+    plot(real(p_sum)/n, imag(p_sum)/n, 'ko', 'MarkerFaceColor', 'k');
+
+    title(sprintf('Phasor Realignment at t = %.1f', t));
+    xlabel('Real');
+    ylabel('Imaginary');
+    xlim([-1.2 1.2]);
+    ylim([-1.2 1.2]);
+
+    legend({'Components', 'Normalized sum', 'Phasor tips', 'Sum tip'}, ...
+        'Location', 'southoutside', 'Orientation', 'horizontal');
+
+    %% Right panel: envelope / coherence over time
+    subplot(1,2,2);
+    cla; hold on; grid on;
+    
+    plot(t_vec, real(p_all), 'k', 'LineWidth', 0.5, 'Color', 'b');
+    plot(t, real(p), 'bo', 'MarkerFaceColor', 'b', 'MarkerSize', 6);
+    plot(t_vec, resultant_mag, 'k', 'LineWidth', 1.8);
+    plot(t, resultant_mag(idx), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 8);
+
+    xlabel('Time');
+    ylabel('Normalized resultant magnitude');
+    title('Envelope from Phasor Realignment');
+    xlim([t-5 t+5]);
+    ylim([0 1.05]);
+
+    % drawnow;
+
+
+    %% GIF generator
+    frame = getframe(gcf);
+    im = frame2im(frame);
+    [A, map] = rgb2ind(im, 256);
+
+    if idx == 1
+        imwrite(A, map, gif_filename, 'gif', 'LoopCount', Inf, 'DelayTime', 0.06);
+    else
+        imwrite(A, map, gif_filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.06);
+    end
+end
