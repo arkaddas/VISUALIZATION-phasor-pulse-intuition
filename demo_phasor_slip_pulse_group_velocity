@@ -21,9 +21,9 @@ omega = linspace(1, 3, n);          % angular frequencies
 k = linspace(1, 3, n);              % wavenumbers
 
 v_frame = 0;                        % moving observation frame
-                                     % try 0, 1, 2, etc.
+% try 0, 1, 2, etc.
 
-
+advanced = 1;
 
 %% Precompute resultant magnitude over all time
 resultant_mag = zeros(size(t_vec));
@@ -41,10 +41,12 @@ end
 p_all = exp(1i * (k.' * (v_frame * t_vec) - omega.' * t_vec));  % (n x T)
 
 %% GIF filename
-gif_filename = 'phasor_slip_pulse.gif';
+% gif_filename = 'phasor_slip_pulse.gif';
 
 %% Figure setup
 figure('Color', 'w', 'Position', [200, 200, 1500, 650]);
+realColor = [202,37,206]./256;
+imagColor = [123,220,42]./256;
 
 for idx = 1:numel(t_vec)
     t = t_vec(idx);
@@ -66,6 +68,16 @@ for idx = 1:numel(t_vec)
 
     plot(real(p), imag(p), 'bo', 'MarkerFaceColor', 'b');
     plot(real(p_sum)/n, imag(p_sum)/n, 'ko', 'MarkerFaceColor', 'k');
+    
+
+    if advanced == 1
+        scatter(real(p), 0,'s', 'MarkerFaceColor', realColor);
+        scatter(0, imag(p),'d', 'MarkerFaceColor', imagColor);
+        quiver(real(p), zeros(size(p)), zeros(size(p)), imag(p), 0,...
+            'LineWidth', 1.3, 'LineStyle', ':', 'Color', realColor, 'ShowArrowHead','off');
+        quiver(zeros(size(p)), imag(p), real(p), zeros(size(p)), 0,...
+            'LineWidth', 1.3, 'LineStyle', ':', 'Color', imagColor, 'ShowArrowHead','off');
+    end
 
     title(sprintf('Phasor Realignment at t = %.1f', t));
     xlabel('Real');
@@ -79,9 +91,14 @@ for idx = 1:numel(t_vec)
     %% Right panel: envelope / coherence over time
     subplot(1,2,2);
     cla; hold on; grid on;
-    
-    plot(t_vec, real(p_all), 'k', 'LineWidth', 0.5, 'Color', 'b');
-    plot(t, real(p), 'bo', 'MarkerFaceColor', 'b', 'MarkerSize', 6);
+
+    % Real component of constitutent frequencies
+    plot(t_vec, real(p_all), 'LineWidth', 0.5, 'Color', realColor);
+    plot(t, real(p), 's', 'MarkerFaceColor', realColor, 'MarkerSize', 6);
+    % Imaginary component of constitutent frequencies
+    plot(t_vec, imag(p_all), 'LineWidth', 0.5, 'Color', imagColor);
+    plot(t, imag(p), 'd', 'MarkerFaceColor', imagColor, 'MarkerSize', 6);
+    % Resultant
     plot(t_vec, resultant_mag, 'k', 'LineWidth', 1.8);
     plot(t, resultant_mag(idx), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 8);
 
@@ -89,19 +106,31 @@ for idx = 1:numel(t_vec)
     ylabel('Normalized resultant magnitude');
     title('Envelope from Phasor Realignment');
     xlim([t-5 t+5]);
-    ylim([0 1.05]);
+    ylim([-1.05 1.05]);
 
-    % drawnow;
+    % Manual legend showing three colored entries for real, imag, and resultant
+    % Create custom legend patches/lines
+    hReal = plot(nan, nan, 's', 'MarkerFaceColor', realColor, 'MarkerEdgeColor', realColor);
+    hImag = plot(nan, nan, 'd', 'MarkerFaceColor', imagColor, 'MarkerEdgeColor', imagColor);
+    hRes  = plot(nan, nan, 'k',  'LineWidth', 1.8);
+
+    legend([hReal, hImag, hRes], {'Real components', 'Imag components', 'Normalized sum'}, ...
+        'Location', 'southoutside', 'Orientation', 'horizontal');
+
+
+    drawnow;
 
 
     %% GIF generator
-    frame = getframe(gcf);
-    im = frame2im(frame);
-    [A, map] = rgb2ind(im, 256);
-
-    if idx == 1
-        imwrite(A, map, gif_filename, 'gif', 'LoopCount', Inf, 'DelayTime', 0.06);
-    else
-        imwrite(A, map, gif_filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.06);
-    end
+    % frame = getframe(gcf);
+    % im = frame2im(frame);
+    % [A, map] = rgb2ind(im, 256);
+    %
+    % if idx == 1
+    %     imwrite(A, map, gif_filename, 'gif', 'LoopCount', Inf, 'DelayTime', 0.06);
+    % else
+    %     imwrite(A, map, gif_filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.06);
+    % end
 end
+
+
